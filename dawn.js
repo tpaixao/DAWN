@@ -6,7 +6,7 @@ var postingKey;
 function checkLoggedIn() {
 	var button = document.getElementById('loginlogout');
 	var user_label = document.getElementById('user_label');
-
+	var login_form = document.getElementById('login_form');
 	//get username/key
 	username = getCookie('username');
 	postingKey = getCookie('postingKey');
@@ -18,11 +18,13 @@ function checkLoggedIn() {
 		button.innerHTML = "Login";
 		user_label.innerHTML='';
 		user_label.style.visibility='hidden';
+		login_form.style.visibility='visible';
 	}else{
 		loggedIn = true;
 		button.innerHTML = "Logout";
 		user_label.innerHTML = username;
 		user_label.style.visibility='visible';
+		login_form.style.visibility='hidden';
 	}
 }
 
@@ -48,11 +50,13 @@ function getCookie(cname) {
     return "";
 }
 
-function click_login_button(){//on load of the button
+function click_login_button(){
 	if(loggedIn){
 		logout();
 	}else{
-		login();
+		var login_form = document.getElementById('login_form');
+		login_form.style.visibility='visible';
+		//login();
 	}
 }
 
@@ -63,17 +67,27 @@ function logout(){
 	checkLoggedIn();
 }
 function login(){
-	loggedIn = true;
 	//set to predefined 
-	setCookie('username','tiagotest',365);
-	setCookie('postingKey','tiagotest',365);
+	uname = document.getElementById('username_input').value;
+	pkey = document.getElementById('postingkey_input').value;
+
+	//check validity
+
+	loggedIn = true;
+	username = uname;
+	postingKey = pkey;
+	setCookie('username',uname,365);
+	setCookie('postingKey',pkey,365);
+	//dont forget to clear these values...
+
 	checkLoggedIn();
 }
 
 checkLoggedIn();
 
-//document.getElementById("loginlogout").addEventListener('load',checkLoggedIn);
-document.getElementById("loginlogout").addEventListener('click',click_login_button);
+//assign functions to events
+document.getElementById("loginlogout").addEventListener('click',click_login_button);//this is the navbar button
+document.getElementById("login_form").addEventListener('click',login); //this is the login form button
 
 
 //OTHER ELEMENTS
