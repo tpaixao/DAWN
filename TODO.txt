@@ -1,0 +1,8 @@
+* create a form for the login
+** verify that postingKey is correct
+
+* load some data (from local database/json file)
+* add a button to register new asset
+* add table of assets
+** only show transfer button if user logged in
+
