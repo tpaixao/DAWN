@@ -16,9 +16,9 @@ steembase.chains.known_chains['STEEM'] = { 'chain_id': '79276aea5d4877d9a25892ea
 class DAWN:
     # client = steem.Steem(['https://testnet.steem.vc'],keys=['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA'])
 
-    def __init__(self,posting_keys):
+    def __init__(self,steemd_nodes,posting_keys):
         self.posting_key = posting_keys
-        self.client = steem.Steem(['https://testnet.steem.vc'],keys=self.posting_key)
+        self.client = steem.Steem(steemd_nodes,keys=self.posting_key)
     
     #these classes 
     def registerAsset(self, author,title,data):
@@ -57,7 +57,8 @@ class DB:
         self.db = sqlite3.connect(self.dbfilename);
         self.db.row_factory = sqlite3.Row
 
-    def closeDB():
+    def closeDB(self):
+        self.db.commit();
         self.db.close()
     
     def resetDB(self):
@@ -65,6 +66,7 @@ class DB:
         cursor.execute('''drop table if exists assets;''');
         cursor.execute('''drop table if exists transfers;''');
         cursor.execute('''drop table if exists users;''');
+        cursor.execute('''drop table if exists params;''');
         cursor.execute('''create table assets(
                 asset_id integer primary key autoincrement,
                 permlink text not null unique,
@@ -93,9 +95,26 @@ class DB:
                 user_id integer primary key autoincrement,
                 username text not null unique);
                 ''');
+        cursor.execute('''create table if not exists params(
+                key text not null unique primary key,
+                value text not null unique);
+                ''');
+        cursor.execute('''insert into params(key,value) values(?,?)''',('last_parsed_block','0'))
 
         self.db.commit();
         pass
+
+    def updateLastParsedBlock(self,last_block):
+        cursor = self.db.cursor();
+        cursor.execute('''update params set value = ? where key = last_parsed_block ''',(last_block,))
+        self.db.commit();
+
+    def getLastParsedBlock(self):
+        cursor = self.db.cursor();
+        cursor.execute('''select value from params where key = last_parsed_block''')
+        last_parsed_block = cursor.fetchone();
+        return last_parsed_block;
+
 
     def addAsset(self,permlink,block,author):
         cursor = self.db.cursor();
@@ -205,28 +224,38 @@ class DB:
             cursor = self.db.cursor()
             cursor.execute('''select * from transfers where asset_id = ?;''',(asset_id,))
 
-            # print("asset # {2}".format(asset_id,self.getUsername(asset['author_id']),self.getUsername(asset['genesis_block'])))
-            # print("genesis block # {0}".format(asset['genesis_block']))
             print("Asset # {0} created by {1} in block # {2}".format(asset_id,self.getUsername(asset['author_id']),asset['genesis_block']))
             for transfer in cursor:
                 print("{0} transfered to {1} in block# {2}".format(self.getUsername(transfer['previous_owner_id']),self.getUsername(transfer['new_owner_id']),transfer['block_number']))
         # pass
 
+    def deleteFromBlock(self,block_number):
+        cursor = self.db.cursor();
+        cursor.execute('''delete from transfers where block_number >= ? ''',(block_number,))
+        cursor.execute('''delete from assets where genesis_block >= ? ''',(block_number,))
+        self.db.commit();
+        # self.updateLastParsedBlock(block_number-1)
+        pass
+
 class DAWNBlockchainParser:
 
-    def __init__(self, dbname):
-        self.client = steem.Steem(['https://testnet.steem.vc'])
-        self.dbname = dbname
+    def __init__(self, steemd_nodes,dbname):
+        self.client = steem.Steem(steemd_nodes) #only need read-access
+        # self.dbname = dbname
+        self.db = DB(dbname)
 
-
-    def getDawnTransactions(self,block):
+    def getDAWNTransactions(self,block):
         pass
 
     def verifyTransfer(self):
         pass
 
+    def replay(self,block_number=0):
+            
+        pass
 
-# dawn = DAWN(['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
+#['https://testnet.steem.vc']
+# dawn = DAWN(['https://testnet.steem.vc'], ['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
 
 # out = dawn.registerAsset('tiagotest','the title of my first asset','this is the data')
 # print(out)
@@ -234,23 +263,27 @@ class DAWNBlockchainParser:
 # print(out)
 
 
-
 # if len(sys.argv) > 1 :
     # startup_behavior = sys.argv[1]
 # else :
     # startup_behavior = 'normal'
 
-db = DB('test.db')
-db.resetDB();
-db.addAsset('tiago/asset1',1,"tiago");
-db.addAsset('tiago/asset2',2,"tiago");
-db.addAsset('mariana/asset_2',2,"mariana");
-db.transferAsset('tiago/asset1',3,'mariana')
-db.transferAsset('tiago/asset1',5,'tiago')
+
+if __name__ == '__main__':
+    db = DB('test.db')
+    db.resetDB();
+    db.addAsset('tiago/asset1',1,"tiago");
+    db.addAsset('tiago/asset2',2,"tiago");
+    db.addAsset('mariana/asset_2',2,"mariana");
+    db.transferAsset('tiago/asset1',3,'mariana')
+    db.transferAsset('tiago/asset1',5,'tiago')
+    db.transferAsset('tiago/asset1',7,'mariana')
 
 
-db.listAssets('tiago')
+    db.listAssets('tiago')
 
-db.listAssetHistory('tiago/asset1')
+    db.listAssetHistory('tiago/asset1')
+
+    pass
 
 
