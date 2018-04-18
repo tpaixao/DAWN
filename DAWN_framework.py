@@ -8,6 +8,10 @@ from steem.utils import derive_permlink, resolve_identifier, fmt_time_string, ke
 
 import sys
 import sqlite3
+import json
+from datetime import datetime,timedelta
+
+from steem.utils import construct_identifier
 
 
 # testnet
@@ -194,22 +198,34 @@ class DB:
             return user[0]
         pass
 
-    def listAssets(self,username):
+    def listAssets(self,username, json_output=True):
         user_id = self.getUserID(username);
         if user_id is None:
             return "user not on the database";
 
         cursor = self.db.cursor();
         cursor.execute('''select * from assets where owner_id = ?''',(user_id,));
-        for row in cursor:
-            print(row['permlink'])
-        pass
+        if json:
+            return json.dumps( [dict(ix) for ix in cursor.fetchall()] ) 
+            pass
+        else:
+            for row in cursor:
+                return row['permlink']
+            pass
 
     def getAssetID(self,permlink):
         cursor = self.db.cursor();
         cursor.execute('''select asset_id from assets where permlink = ?''',(permlink,));
         assetID = cursor.fetchone();
         return assetID[0]
+
+    def getAssetOwner(self,permlink):
+        cursor = self.db.cursor();
+        cursor.execute('''select owner_id from assets where permlink = ?''',(permlink,));
+        owner_id = cursor.fetchone()[0];
+        owner_name = getUsername(owner_id)
+        return owner_name
+        pass
 
     def listAssetHistory(self,asset_permlink):
         asset_id = self.getAssetID(asset_permlink);
@@ -234,25 +250,151 @@ class DB:
         cursor.execute('''delete from transfers where block_number >= ? ''',(block_number,))
         cursor.execute('''delete from assets where genesis_block >= ? ''',(block_number,))
         self.db.commit();
-        # self.updateLastParsedBlock(block_number-1)
+        self.updateLastParsedBlock(block_number-1)
         pass
 
 class DAWNBlockchainParser:
 
     def __init__(self, steemd_nodes,dbname):
-        self.client = steem.Steem(steemd_nodes) #only need read-access
+        self.steem_client = steem.Steem(steemd_nodes) #only need read-access
         # self.dbname = dbname
         self.db = DB(dbname)
 
-    def getDAWNTransactions(self,block):
+    # returns None if it is not aDAWN op
+    # else returns the op dict
+    def get_DAWN_op(self,op):
+        if op[0] != 'custom_json':
+            return None
+        # if json_obj[0] not in  ['register_asset','transfer_asset']:
+        if op[1]['id'] != 'DAWN':
+            return None
+        else:
+            # json_obj = json.loads(op[1]['json']);
+            return op[1]
         pass
 
-    def verifyTransfer(self):
+# {'required_auths': [], 'required_posting_auths': ['tiagotest'], 'id': 'DAWN', 'json': '["register_asset", {"permlink": "tiagotest/the-title-of-my-first-asset", "title": "the-title-of-my-first-asset", "author": "tiagotest", "owner": "tiagotest", "data": "this is the data"}]'}
+    
+    # should return either true or false
+    def verify_op(self,op_dict):
+        json_obj = json.loads(op_dict['json'])
+        if op_json[0] == 'register_asset':
+            return self.verify_register_op(op_dict,json_obj)
+            pass
+        elif op_json[0] == 'transfer_asset':
+            return self.verify_transfer_op(op_dict,json_obj)
+        else: #no DAWN op that we know
+            return False
+
+    # should return either true or false
+    def verify_transfer_op(self,op_dict,json_obj):
+        # json_obj = json.loads[op_dict['json']);
+        # if json_obj[0] == 'transfer_asset': #re verify?
+        #is the sender the current owner?
+        sender = op_dict[1]['required_posting_auths'][0]
+        asset_owner = self.db.getAssetOwner(json_obj['permlink']);
+        if sender == asset_owner:
+            return True
+        else:
+            return False
+    pass
+    
+    # should return either true or false
+    def verify_register_op(self,op_dict):
+        author_OK = False;
+        json_obj = json.loads[op_dict['json']);
+        # is the permlink OK (owner/title)?
+        sender = op_dict[1]['required_posting_auths'][0]
+        author,title = resolve_identifier(json_obj['permlink'])
+        if sender != author:
+            return False
+        #does an asset with the same permlink already exist?
+        asset_id = self.getAssetID(json_obj['permlink'])
+        if asset_id is None:
+            return False
+        return True
+    pass
+
+    def execute_op(self,op_dict):
+        json_obj = json.loads(op_dict['json'])
+        if op_json[0] == 'register_asset':
+            return self.register_asset(json_obj);
+        elif op_json[0] == 'transfer_asset':
+            return self.transfer_asset(json_obj);
+        else: #no DAWN op that we know
+            return False
+        pass
+
+    # TODO
+    def register_asset(self,json_op,block_number):
+        #add obj to DB
+        permlink = json_op['permlink']
+        author,title = resolve_identifier(permlink);
+        self.db.addAsset(permlink,block_number,author);
+        return True
+        pass
+
+    # TODO
+    def transfer_asset(self,json_op,block_number):
+        #add transfer_order to DB
+        permlink = json_op['permlink']
+        new_owner = json_op['new_owner']
+        self.db.transferAsset(permlink,block_number,new_owner);
+        return True
         pass
 
     def replay(self,block_number=0):
-            
-        pass
+
+        if block_number == 0:
+            # replay normally (from the last parsed block
+            last_parsed_block = self.getLastParsedBlock()
+        else: # replay from some previous block
+            last_parsed_block = self.deleteFromBlock(block_number) # this updates the last_parsed_block in the database
+        
+        while True:
+            # last block in the blockchain
+            try:
+                last_irr_block = self.steem_client.last_irreversible_block_num()
+            except TypeError:
+                pass
+            else: 
+                break
+        # MAIN LOOP 
+        while True:
+            if last_parsed_block + 1 < last_irr_block:
+                block = self.steem_client.get_block(last_parsed_block+1);
+                
+                trxs = block['transactions'];
+                # trx_ids  = block['transaction_ids']
+                if len(trxs) == 0:
+                    print("block #{0}:empty".format(last_parsed_block +1))
+                    time.sleep(1)
+                    continue
+
+                this_block = last_parsed_block +1;
+
+                for trx in trxs:
+                    for op in trx['operations']:
+                        op_dict = self.get_DAWN_op(op)
+
+                        # not DAWN op 
+                        if op_dict is None: continue
+                        #DAWN_op
+                        if self.verify_op(op_dict):
+                            # execute  op
+                            pass
+                    pass
+
+                last_parsed_block = this_block;
+                pass
+            else: # reached the last block; get a new one
+                try:
+                    last_irr_block = self.steem_client.last_irreversible_block_num()
+                except TypeError:
+                    print('problem getting a new block')
+                    pass
+            pass
+
 
 #['https://testnet.steem.vc']
 # dawn = DAWN(['https://testnet.steem.vc'], ['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
@@ -270,19 +412,29 @@ class DAWNBlockchainParser:
 
 
 if __name__ == '__main__':
-    db = DB('test.db')
-    db.resetDB();
-    db.addAsset('tiago/asset1',1,"tiago");
-    db.addAsset('tiago/asset2',2,"tiago");
-    db.addAsset('mariana/asset_2',2,"mariana");
-    db.transferAsset('tiago/asset1',3,'mariana')
-    db.transferAsset('tiago/asset1',5,'tiago')
-    db.transferAsset('tiago/asset1',7,'mariana')
+    # db = DB('test.db')
+    # db.resetDB();
+    # db.addAsset('tiago/asset1',1,"tiago");
+    # db.addAsset('tiago/asset2',2,"tiago");
+    # db.addAsset('mariana/asset_2',2,"mariana");
+    # db.transferAsset('tiago/asset1',3,'mariana')
+    # db.transferAsset('tiago/asset1',5,'tiago')
+    # db.transferAsset('tiago/asset1',7,'mariana')
+
+    # print(db.listAssets('tiago'))
+
+    # db.listAssetHistory('tiago/asset1')
+    
+    dawn = DAWN(['https://testnet.steem.vc'], ['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
+
+    print("current block is: {0}".format(dawn.client.last_irreversible_block_num))
+
+    out = dawn.registerAsset('tiagotest','the-title-of-my-first-asset','this is the data')
+    print(out)
+    out = dawn.transferAsset('tiagotest/the-title-of-my-first-asset','tiagotest','tiagouser')
+    print(out)
 
 
-    db.listAssets('tiago')
-
-    db.listAssetHistory('tiago/asset1')
 
     pass
 
