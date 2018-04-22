@@ -302,7 +302,7 @@ class DAWNBlockchainParser:
     # should return either true or false
     def verify_register_op(self,op_dict):
         author_OK = False;
-        json_obj = json.loads[op_dict['json']);
+        json_obj = json.loads(op_dict['json']);
         # is the permlink OK (owner/title)?
         sender = op_dict[1]['required_posting_auths'][0]
         author,title = resolve_identifier(json_obj['permlink'])
@@ -425,17 +425,57 @@ if __name__ == '__main__':
 
     # db.listAssetHistory('tiago/asset1')
     
-    dawn = DAWN(['https://testnet.steem.vc'], ['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
+    # dawn = DAWN(['https://testnet.steem.vc'], ['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
 
-    print("current block is: {0}".format(dawn.client.last_irreversible_block_num))
+    # print("current block is: {0}".format(dawn.client.last_irreversible_block_num))
 
-    out = dawn.registerAsset('tiagotest','the-title-of-my-first-asset','this is the data')
-    print(out)
-    out = dawn.transferAsset('tiagotest/the-title-of-my-first-asset','tiagotest','tiagouser')
-    print(out)
+    # out = dawn.registerAsset('tiagotest','the-title-of-my-first-asset','this is the data')
+    # print(out)
+    # out = dawn.transferAsset('tiagotest/the-title-of-my-first-asset','tiagotest','tiagouser')
+    # print(out)
+
+    try:
+        with open('config.json') as config_file:
+            config = json.load(config_file)
+    except FileNotFoundError:
+        config = {'username': '','postingKey': '', 'steem_node': ''}
+        with open('config.json','w') as config_file:
+            json.dump(config,config_file)
+        raise FileNotFoundError("Could not open config.json. Please populate it with relevant details." )
+        
+
+    try:
+        username = config['username']
+        postingKey = config['postingKey']
+        steem_node = config['steem_node']
+    except KeyError as er:
+        raise KeyError('Could not read required key from config.json.')
+
+    if len(sys.argv) > 1:
+        if sys.argv[1] == 'register':
+            register()
+            pass
+        elif sys.argv[1] == 'transfer':
+            pass
+        elif sys.argv[1] == 'rebuild-db':
+            pass
+        else:
+            print('command {0} not known'.format(sys.argv[1]))
+            printHelp(sys.argv[0])
 
 
 
+def printHelp(executable_name):
+    print("Usage: {0} command options. Check config.json for your credentials.\n Available options:".format(executable_name))
+    # REGISTER
+    print("register: registers a new asset in the blockchain")
+    print("args: \n ASSET_FILE: JSON file describing the asset. Fields: author, title, data")
+    # TRANSFER
+    print("transfer: transfers one of your assets to a new owner. ")
+    print("args: \n asset_permlink: owner/title, new_owner")
+    # REBUILD-DB    
+    print("rebuild-db: Rebuilds the database from a particular block")
+    print("args: \n block_number: the block number to rebuild from. Default value is 0. This will run until interrupted.")
     pass
 
 
