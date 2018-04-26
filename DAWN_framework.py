@@ -203,20 +203,20 @@ class DB:
             return user[0]
         pass
 
-    def listAssets(self,username, json_output=True):
+    def listAssets(self,username):
         user_id = self.getUserID(username);
         if user_id is None:
-            return "user not on the database";
+            return '{ "user": "not on database" }';
 
         cursor = self.db.cursor();
         cursor.execute('''select * from assets where owner_id = ?''',(user_id,));
-        if json:
-            return json.dumps( [dict(ix) for ix in cursor.fetchall()] ) 
-            pass
-        else:
-            for row in cursor:
-                return row['permlink']
-            pass
+        # if json_output:
+        return json.dumps( [dict(ix) for ix in cursor.fetchall()] ) 
+        # else:
+            # for row in cursor:
+                # # print("no json")
+                # return row['permlink']
+            # pass
 
     def getAssetID(self,permlink):
         cursor = self.db.cursor();
@@ -401,19 +401,6 @@ class DAWNBlockchainParser:
             pass
 
 
-#['https://testnet.steem.vc']
-# dawn = DAWN(['https://testnet.steem.vc'], ['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
-
-# out = dawn.registerAsset('tiagotest','the title of my first asset','this is the data')
-# print(out)
-# out = dawn.transferAsset('tiagotest/the title of my first asset','tiagotest','tiagouser')
-# print(out)
-
-
-# if len(sys.argv) > 1 :
-    # startup_behavior = sys.argv[1]
-# else :
-    # startup_behavior = 'normal'
 
 # CLI functions
 
@@ -449,8 +436,7 @@ def transfer(asset_permlink,new_owner):
 
 def list(user):
     db = DB(config['db_name']);
-
-    
+    print(db.listAssets(user))
     pass
 
 
@@ -483,6 +469,20 @@ if __name__ == '__main__':
     # print(db.listAssets('tiago'))
 
     # db.listAssetHistory('tiago/asset1')
+
+    #['https://testnet.steem.vc']
+    # dawn = DAWN(['https://testnet.steem.vc'], ['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
+
+    # out = dawn.registerAsset('tiagotest','the title of my first asset','this is the data')
+    # print(out)
+    # out = dawn.transferAsset('tiagotest/the title of my first asset','tiagotest','tiagouser')
+    # print(out)
+
+
+    # if len(sys.argv) > 1 :
+        # startup_behavior = sys.argv[1]
+    # else :
+        # startup_behavior = 'normal'
     
     # dawn = DAWN(['https://testnet.steem.vc'], ['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA']);
 
