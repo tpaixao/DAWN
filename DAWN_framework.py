@@ -5,26 +5,31 @@ import steembase
 # from steembase.account import PasswordKey
 import steem
 from steem.utils import derive_permlink, resolve_identifier, fmt_time_string, keep_in_dict
+from steem.utils import construct_identifier
 
 import sys
 import sqlite3
 import json
 from datetime import datetime,timedelta
 
-from steem.utils import construct_identifier
+# from pathlib import Path # for isfile()
+import os.path
 
 
-# testnet
-steembase.chains.known_chains['STEEM'] = { 'chain_id': '79276aea5d4877d9a25892eaa01b0adf019d3e5cb12a97478df3298ccdd01673', 'prefix': 'STX', 'steem_symbol': 'STEEM', 'sbd_symbol': 'SBD', 'vests_symbol': 'VESTS' }
 
 class DAWN:
     # client = steem.Steem(['https://testnet.steem.vc'],keys=['5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA'])
 
     def __init__(self,steemd_nodes,posting_keys):
         self.posting_key = posting_keys
-        self.client = steem.Steem(steemd_nodes,keys=self.posting_key)
+        # testnet
+        if steemd_nodes == ['https://testnet.steem.vc']:
+            steembase.chains.known_chains['STEEM'] = { 'chain_id': '79276aea5d4877d9a25892eaa01b0adf019d3e5cb12a97478df3298ccdd01673', 'prefix': 'STX', 'steem_symbol': 'STEEM', 'sbd_symbol': 'SBD', 'vests_symbol': 'VESTS' }
+            self.client = steem.Steem(steemd_nodes,keys=[self.posting_key])
+        else: # use standard nodes
+            self.client = steem.Steem(keys = [self.posting_key])
+
     
-    #these classes 
     def registerAsset(self, author,title,data):
         # author, permlink = resolve_identifier(identifier)
         identifier = author + '/' + title;
@@ -410,6 +415,60 @@ class DAWNBlockchainParser:
 # else :
     # startup_behavior = 'normal'
 
+# CLI functions
+
+def register(asset_fname):
+    # load asset file
+    asset_file= open(asset_fname);
+    asset = json.load(asset_file)
+    print(asset)
+    if 'author' in asset and 'title' in asset and 'data' in asset:
+        author = asset['author']
+        title = asset['title'].replace(" ","-")
+        data = asset['data']
+    else:
+        print("Required field in asset not found")
+        return False
+    # send it to the blockchain
+    dawn = DAWN(config['steem_node'],config['postingKey'])
+    last_block = dawn.client.last_irreversible_block_num
+    print("Last block is: {0}".format(last_block))
+    out = dawn.registerAsset(author,title,data);
+    print(out)
+    pass
+
+def transfer(asset_permlink,new_owner):
+    # get 
+    old_owner = config['username']
+    dawn = DAWN(config['steem_node'],config['postingKey'])
+    last_block = dawn.client.last_irreversible_block_num
+    print("Last block is: {0}".format(last_block))
+    out = dawn.transferAsset(asset_permlink,old_owner,new_owner)
+    print(out)
+    pass
+
+def list(user):
+    db = DB(config['db_name']);
+
+    
+    pass
+
+
+def printHelp(executable_name):
+    print("Usage: {0} command options. Check config.json for your credentials.\n Available options:".format(executable_name))
+    # REGISTER
+    print("register: registers a new asset in the blockchain")
+    print("args: \n ASSET_FILE: JSON file describing the asset. Fields: author, title, data")
+    # TRANSFER
+    print("transfer: transfers one of your assets to a new owner. ")
+    print("args: \n asset_permlink: owner/title, new_owner")
+    # LIST
+    print("list: list all assets of a particular user. ")
+    print("args: \n username: self-explanatory.")
+    # REBUILD-DB    
+    print("rebuild-db: Rebuilds the database from a particular block")
+    print("args: \n block_number: the block number to rebuild from. Default value is 0. This will run until interrupted.")
+    pass
 
 if __name__ == '__main__':
     # db = DB('test.db')
@@ -434,48 +493,55 @@ if __name__ == '__main__':
     # out = dawn.transferAsset('tiagotest/the-title-of-my-first-asset','tiagotest','tiagouser')
     # print(out)
 
+    global config
+
     try:
         with open('config.json') as config_file:
             config = json.load(config_file)
     except FileNotFoundError:
-        config = {'username': '','postingKey': '', 'steem_node': ''}
+        config = {'username': '','postingKey': '', 'db_name': '', 'steem_node': ''}
         with open('config.json','w') as config_file:
             json.dump(config,config_file)
-        raise FileNotFoundError("Could not open config.json. Please populate it with relevant details." )
+        raise FileNotFoundError("Could not read config.json. Please populate it with relevant details." )
         
 
     try:
         username = config['username']
         postingKey = config['postingKey']
+        db_name = config['db_name']
         steem_node = config['steem_node']
     except KeyError as er:
         raise KeyError('Could not read required key from config.json.')
 
     if len(sys.argv) > 1:
-        if sys.argv[1] == 'register':
-            register()
+        if sys.argv[1] == 'register':#args: asset_file
+            # asset_file = Path(argv[2])
+            # if asset_file.is_file():
+            if os.path.isfile(sys.argv[2]):
+                register(sys.argv[2])
+            else:
+                print("Asset file {0} not found".format(sys.argv[2]))
             pass
-        elif sys.argv[1] == 'transfer':
+        elif sys.argv[1] == 'transfer': #args: asset, new_owner
+            asset_permlink = sys.argv[2];
+            new_owner = sys.argv[3];
+            #sanity check (poor - need to do better inside)
+            if asset_permlink == '' or new_owner == '':
+                printHelp(sys.argv[0]);
+            else:
+                transfer(asset_permlink,new_owner)
             pass
-        elif sys.argv[1] == 'rebuild-db':
+        elif sys.argv[1] == 'list':#args: username
+            list(sys.argv[2])
+            pass
+        elif sys.argv[1] == 'rebuild-db':#args: from_block
             pass
         else:
             print('command {0} not known'.format(sys.argv[1]))
             printHelp(sys.argv[0])
+    else:
+        # print('command {0} not known'.format(sys.argv[1]))
+        printHelp(sys.argv[0])
 
-
-
-def printHelp(executable_name):
-    print("Usage: {0} command options. Check config.json for your credentials.\n Available options:".format(executable_name))
-    # REGISTER
-    print("register: registers a new asset in the blockchain")
-    print("args: \n ASSET_FILE: JSON file describing the asset. Fields: author, title, data")
-    # TRANSFER
-    print("transfer: transfers one of your assets to a new owner. ")
-    print("args: \n asset_permlink: owner/title, new_owner")
-    # REBUILD-DB    
-    print("rebuild-db: Rebuilds the database from a particular block")
-    print("args: \n block_number: the block number to rebuild from. Default value is 0. This will run until interrupted.")
-    pass
 
 
