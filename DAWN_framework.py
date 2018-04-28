@@ -10,6 +10,7 @@ from steem.utils import construct_identifier
 import sys
 import sqlite3
 import json
+import time
 from datetime import datetime,timedelta
 
 # from pathlib import Path # for isfile()
@@ -115,7 +116,7 @@ class DB:
 
     def updateLastParsedBlock(self,last_block):
         cursor = self.db.cursor();
-        cursor.execute('''update params set value = ? where key = last_parsed_block ''',(last_block,))
+        cursor.execute('''update params set value = ? where key = 'last_parsed_block' ''',(last_block,))
         self.db.commit();
 
     def getLastParsedBlock(self):
@@ -222,15 +223,19 @@ class DB:
         cursor = self.db.cursor();
         cursor.execute('''select asset_id from assets where permlink = ?''',(permlink,));
         assetID = cursor.fetchone();
-        return assetID[0]
+        if assetID is None:
+            return None
+        else:
+            return assetID[0]
 
     def getAssetOwner(self,permlink):
         cursor = self.db.cursor();
         cursor.execute('''select owner_id from assets where permlink = ?''',(permlink,));
-        owner_id = cursor.fetchone()[0];
+        owner_id = cursor.fetchone();
+        if owner_id is None:
+            return None
         owner_name = getUsername(owner_id)
         return owner_name
-        pass
 
     def listAssetHistory(self,asset_permlink):
         asset_id = self.getAssetID(asset_permlink);
@@ -257,6 +262,7 @@ class DB:
         cursor.execute('''delete from assets where genesis_block >= ? ''',(block_number,))
         self.db.commit();
         self.updateLastParsedBlock(block_number-1)
+        return block_number -1
         pass
 
 class DAWNBlockchainParser:
@@ -284,10 +290,11 @@ class DAWNBlockchainParser:
     # should return either true or false
     def verify_op(self,op_dict):
         json_obj = json.loads(op_dict['json'])
-        if op_json[0] == 'register_asset':
+        # print(json.dumps(json_obj))
+        # print(op_dict)
+        if json_obj[0] == 'register_asset':
             return self.verify_register_op(op_dict,json_obj)
-            pass
-        elif op_json[0] == 'transfer_asset':
+        elif json_obj[0] == 'transfer_asset':
             return self.verify_transfer_op(op_dict,json_obj)
         else: #no DAWN op that we know
             return False
@@ -297,8 +304,8 @@ class DAWNBlockchainParser:
         # json_obj = json.loads[op_dict['json']);
         # if json_obj[0] == 'transfer_asset': #re verify?
         #is the sender the current owner?
-        sender = op_dict[1]['required_posting_auths'][0]
-        asset_owner = self.db.getAssetOwner(json_obj['permlink']);
+        sender = op_dict['required_posting_auths'][0]
+        asset_owner = self.db.getAssetOwner(json_obj[1]['permlink']);
         if sender == asset_owner:
             return True
         else:
@@ -306,16 +313,16 @@ class DAWNBlockchainParser:
     pass
     
     # should return either true or false
-    def verify_register_op(self,op_dict):
-        author_OK = False;
-        json_obj = json.loads(op_dict['json']);
+    def verify_register_op(self,op_dict,json_obj):
+        # json_obj = json.loads(op_dict['json']);
         # is the permlink OK (owner/title)?
-        sender = op_dict[1]['required_posting_auths'][0]
-        author,title = resolve_identifier(json_obj['permlink'])
+        sender = op_dict['required_posting_auths'][0]
+        # print(json_obj['permlink'])
+        author,title = resolve_identifier(json_obj[1]['permlink'])
         if sender != author:
             return False
         #does an asset with the same permlink already exist?
-        asset_id = self.getAssetID(json_obj['permlink'])
+        asset_id = self.db.getAssetID(json_obj[1]['permlink'])
         if asset_id is None:
             return False
         return True
@@ -351,22 +358,26 @@ class DAWNBlockchainParser:
 
         if block_number == 0:
             # replay normally (from the last parsed block
-            last_parsed_block = self.getLastParsedBlock()
+            last_parsed_block = self.db.getLastParsedBlock()
         else: # replay from some previous block
-            last_parsed_block = self.deleteFromBlock(block_number) # this updates the last_parsed_block in the database
+            last_parsed_block = self.db.deleteFromBlock(block_number) # this updates the last_parsed_block in the database
+
+        print("last parsed block: {0}".format(last_parsed_block))
         
-        while True:
+        # while True:
             # last block in the blockchain
-            try:
-                last_irr_block = self.steem_client.last_irreversible_block_num()
-            except TypeError:
-                pass
-            else: 
-                break
+            # try:
+        last_irr_block = self.steem_client.last_irreversible_block_num
+        print("last irr block: {0}".format(last_irr_block))
+            # except TypeError:
+                # pass
+            # else: 
+                # break
         # MAIN LOOP 
         while True:
             if last_parsed_block + 1 < last_irr_block:
                 # Get a block
+                print("Getting block #{0}".format(last_parsed_block+1))
                 block = self.steem_client.get_block(last_parsed_block+1);
                 
                 trxs = block['transactions'];
@@ -374,6 +385,7 @@ class DAWNBlockchainParser:
                 if len(trxs) == 0:
                     print("block #{0}:empty".format(last_parsed_block +1))
                     time.sleep(1)
+                    last_parsed_block = last_parsed_block +1;
                     continue
 
                 this_block = last_parsed_block +1;
@@ -383,7 +395,8 @@ class DAWNBlockchainParser:
                         op_dict = self.get_DAWN_op(op)
 
                         # not DAWN op 
-                        if op_dict is None: continue
+                        if op_dict is None: 
+                            continue
                         #DAWN_op
                         if self.verify_op(op_dict):
                             # execute  op
@@ -459,6 +472,8 @@ def printHelp(executable_name):
     # LIST ASSET
     print("list-asset: list ownership history of an asset. ")
     print("args: \n asset: asset_permlink.")
+    # RESET
+    print("reset: resets the DB")
     # REBUILD-DB    
     print("rebuild-db: Rebuilds the database from a particular block")
     print("args: \n block_number: the block number to rebuild from. Default value is 0. This will run until interrupted.")
@@ -546,9 +561,18 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'list-asset':#args: username
             list_asset_history(sys.argv[2])
             pass
+        elif sys.argv[1] == 'reset':
+            db = DB(db_name)
+            db.resetDB()
         elif sys.argv[1] == 'rebuild-db':#args: from_block
-            if
-            pass
+            if len(sys.argv) > 2:
+                from_block = int(sys.argv[2])
+            else:
+                from_block = int(first_block)
+            parser = DAWNBlockchainParser(steem_node,db_name)
+            # parser.db.deleteFromBlock(from_block)
+            parser.replay(from_block)
+            
         else:
             print('command {0} not known'.format(sys.argv[1]))
             printHelp(sys.argv[0])
