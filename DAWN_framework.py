@@ -206,7 +206,7 @@ class DB:
     def listAssets(self,username):
         user_id = self.getUserID(username);
         if user_id is None:
-            return '{ "user": "not on database" }';
+            return '{ "error": "user not on database" }';
 
         cursor = self.db.cursor();
         cursor.execute('''select * from assets where owner_id = ?''',(user_id,));
@@ -235,7 +235,7 @@ class DB:
     def listAssetHistory(self,asset_permlink):
         asset_id = self.getAssetID(asset_permlink);
         if asset_id is None:
-            return "asset not found"
+            return '{"error": "asset not found on DB"}'
         else:
             #get asset
             cursor1 = self.db.cursor();
@@ -245,6 +245,7 @@ class DB:
             cursor = self.db.cursor()
             cursor.execute('''select * from transfers where asset_id = ?;''',(asset_id,))
 
+            # TODO: SHOULD OUTPUT JSON
             print("Asset # {0} created by {1} in block # {2}".format(asset_id,self.getUsername(asset['author_id']),asset['genesis_block']))
             for transfer in cursor:
                 print("{0} transfered to {1} in block# {2}".format(self.getUsername(transfer['previous_owner_id']),self.getUsername(transfer['new_owner_id']),transfer['block_number']))
@@ -330,7 +331,6 @@ class DAWNBlockchainParser:
             return False
         pass
 
-    # TODO
     def register_asset(self,json_op,block_number):
         #add obj to DB
         permlink = json_op['permlink']
@@ -339,7 +339,6 @@ class DAWNBlockchainParser:
         return True
         pass
 
-    # TODO
     def transfer_asset(self,json_op,block_number):
         #add transfer_order to DB
         permlink = json_op['permlink']
@@ -367,10 +366,11 @@ class DAWNBlockchainParser:
         # MAIN LOOP 
         while True:
             if last_parsed_block + 1 < last_irr_block:
+                # Get a block
                 block = self.steem_client.get_block(last_parsed_block+1);
                 
                 trxs = block['transactions'];
-                # trx_ids  = block['transaction_ids']
+                trx_ids  = block['transaction_ids']
                 if len(trxs) == 0:
                     print("block #{0}:empty".format(last_parsed_block +1))
                     time.sleep(1)
@@ -378,7 +378,7 @@ class DAWNBlockchainParser:
 
                 this_block = last_parsed_block +1;
 
-                for trx in trxs:
+                for trx,trx_id in zip(trxs,trx_ids):
                     for op in trx['operations']:
                         op_dict = self.get_DAWN_op(op)
 
@@ -387,7 +387,7 @@ class DAWNBlockchainParser:
                         #DAWN_op
                         if self.verify_op(op_dict):
                             # execute  op
-                            pass
+                            self.execute_op(op_dict)
                     pass
 
                 last_parsed_block = this_block;
@@ -434,11 +434,16 @@ def transfer(asset_permlink,new_owner):
     print(out)
     pass
 
-def list(user):
+def list_user_assets(user):
     db = DB(config['db_name']);
     print(db.listAssets(user))
     pass
 
+def list_asset_history(asset_permlink):
+    db = DB(config['db_name']);
+    # print(db.listAssets(user))
+    print(db.listAssetHistory(asset_permlink))
+    pass
 
 def printHelp(executable_name):
     print("Usage: {0} command options. Check config.json for your credentials.\n Available options:".format(executable_name))
@@ -448,9 +453,12 @@ def printHelp(executable_name):
     # TRANSFER
     print("transfer: transfers one of your assets to a new owner. ")
     print("args: \n asset_permlink: owner/title, new_owner")
-    # LIST
-    print("list: list all assets of a particular user. ")
+    # LIST USER
+    print("list-user: list all assets of a particular user. ")
     print("args: \n username: self-explanatory.")
+    # LIST ASSET
+    print("list-asset: list ownership history of an asset. ")
+    print("args: \n asset: asset_permlink.")
     # REBUILD-DB    
     print("rebuild-db: Rebuilds the database from a particular block")
     print("args: \n block_number: the block number to rebuild from. Default value is 0. This will run until interrupted.")
@@ -499,7 +507,7 @@ if __name__ == '__main__':
         with open('config.json') as config_file:
             config = json.load(config_file)
     except FileNotFoundError:
-        config = {'username': '','postingKey': '', 'db_name': '', 'steem_node': ''}
+        config = {'username': '','postingKey': '', 'db_name': '', 'steem_node': '','first_block': ''}
         with open('config.json','w') as config_file:
             json.dump(config,config_file)
         raise FileNotFoundError("Could not read config.json. Please populate it with relevant details." )
@@ -510,6 +518,7 @@ if __name__ == '__main__':
         postingKey = config['postingKey']
         db_name = config['db_name']
         steem_node = config['steem_node']
+        first_block = config['first_block']
     except KeyError as er:
         raise KeyError('Could not read required key from config.json.')
 
@@ -531,10 +540,14 @@ if __name__ == '__main__':
             else:
                 transfer(asset_permlink,new_owner)
             pass
-        elif sys.argv[1] == 'list':#args: username
-            list(sys.argv[2])
+        elif sys.argv[1] == 'list-user':#args: username
+            list_user_assets(sys.argv[2])
+            pass
+        elif sys.argv[1] == 'list-asset':#args: username
+            list_asset_history(sys.argv[2])
             pass
         elif sys.argv[1] == 'rebuild-db':#args: from_block
+            if
             pass
         else:
             print('command {0} not known'.format(sys.argv[1]))
