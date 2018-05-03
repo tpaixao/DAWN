@@ -344,7 +344,6 @@ class DAWNBlockchainParser:
         author,title = resolve_identifier(permlink);
         self.db.addAsset(permlink,block_number,author);
         return True
-        pass
 
     def transfer_asset(self,json_op,block_number):
         #add transfer_order to DB
@@ -352,7 +351,6 @@ class DAWNBlockchainParser:
         new_owner = json_op['new_owner']
         self.db.transferAsset(permlink,block_number,new_owner);
         return True
-        pass
 
     def replay(self,block_number=0):
 

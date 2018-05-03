@@ -60,6 +60,7 @@ function click_login_button(){
 	}else{
 		var login_form = document.getElementById('login_form');
 		login_form.style.visibility='visible';
+		//login_form.style.height=0;
 		//login();
 	}
 }

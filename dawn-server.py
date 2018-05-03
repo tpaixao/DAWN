@@ -2,13 +2,28 @@ from DAWN_framework import DAWN, DB
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 
 app = Flask(__name__)
-# Load default config and override config from an environment variable
-app.config.update(dict(
-    SECRET_KEY='development key',
-    USERNAME='admin',
-    PASSWORD='default'
-))
-app.config.from_envvar('DAWN_SETTINGS', silent=True)
+
+# Load config ( and override config from an environment variable
+ )global config
+
+try:
+    with open('config.json') as config_file:
+        config = json.load(config_file)
+except FileNotFoundError:
+    config = {'username': '','postingKey': '', 'db_name': '', 'steem_node': '','first_block': ''}
+    with open('config.json','w') as config_file:
+        json.dump(config,config_file)
+    raise FileNotFoundError("Could not read config.json. Please populate it with relevant details." )
+    
+
+try:
+    username = config['username']
+    postingKey = config['postingKey']
+    db_name = config['db_name']
+    steem_node = config['steem_node']
+    first_block = config['first_block']
+except KeyError as er:
+    raise KeyError('Could not read required key from config.json.')
 
 # dawn = DAWN()
 db = DB('test.db')
