@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Decentralized Asset World Network</title><meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+		<!--<link href="https://unpkg.com/picnic" rel="stylesheet">-->
+		<link href="{{ url_for('static', filename='picnic.css')}}" rel="stylesheet" type="text/css">
+		<link href="{{ url_for('static', filename='dawn.css')}}" rel="stylesheet">
+	</head>
+
+	<body> 
+		<!-- TOP BAR --> 
+		<nav>
+			<a href="#" class="brand">DAWN</a>
+			<div class="menu">
+				{% if not session.logged_in %}
+				<a href=" url_for('login') " id="loginlogout" class="button icon-puzzle">Login</a>
+				{% else %}
+				<span id="user_label"> {{ session.username }}</span>
+				<a href=" url_for('logout') " id="loginlogout" class="button icon-puzzle">Logout</a>
+				{% endif %}
+			</div> 
+		</nav>
+
+		{% for message in get_flashed_messages() %}
+		<div class=flash>{{ message }}</div>
+		{% endfor %}
+
+		{% block body %}
+		{% endblock %}
+
+		<!-- dsteem?  -->
+		<!--<script src="https://unpkg.com/dsteem@latest/dist/dsteem.js"></script>-->
+		<script src=" {{ url_for('static',filename='steem.min.js')}} "></script>
+		<!--<script src="dawn.js"></script> 	-->
+	</body>
+</html>
