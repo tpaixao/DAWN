@@ -194,15 +194,6 @@ class DB:
             return userID[0]
         pass
 
-    def getUsername(self,userid):
-        cursor = self.db.cursor();
-        cursor.execute('''select username from users where user_id = ?''',(userid,));
-        user = cursor.fetchone();
-        if user is None:
-            return None
-        else:
-            return user[0]
-        pass
 
     def listAssets(self,username):
         user_id = self.getUserID(username);
@@ -219,6 +210,39 @@ class DB:
                 # return row['permlink']
             # pass
 
+    def listUserOwned(self,username):
+        user_id = self.getUserID(username);
+        if user_id is None:
+            return '{ "error": "user not on database" }';
+
+        cursor = self.db.cursor();
+
+        cursor.execute('''select asset_id,permlink,genesis_block,username from assets join users on users.user_id=assets.author_id where assets.owner_id=?''',(user_id,));
+        # if json_output:
+        return json.dumps( [dict(ix) for ix in cursor.fetchall()] ) 
+
+    def listUserCreated(self,username):
+        user_id = self.getUserID(username);
+        if user_id is None:
+            return '{ "error": "user not on database" }';
+
+        cursor = self.db.cursor();
+
+        cursor.execute('''select asset_id,permlink,genesis_block,username from assets join users on users.user_id=assets.author_id where assets.author=?''',(user_id,));
+        # if json_output:
+        return json.dumps( [dict(ix) for ix in cursor.fetchall()] ) 
+
+    def getUsername(self,userid):
+        print(userid)
+        cursor = self.db.cursor();
+        cursor.execute('''select username from users where user_id = ?''',(userid,));
+        user = cursor.fetchone();
+        if user is None:
+            return None
+        else:
+            return user['username']
+        pass
+
     def getAssetID(self,permlink):
         cursor = self.db.cursor();
         cursor.execute('''select asset_id from assets where permlink = ?''',(permlink,));
@@ -234,7 +258,7 @@ class DB:
         owner_id = cursor.fetchone();
         if owner_id is None:
             return None
-        owner_name = getUsername(owner_id)
+        owner_name = self.getUsername(owner_id[0])
         return owner_name
 
     def listAssetHistory(self,asset_permlink):
@@ -251,9 +275,22 @@ class DB:
             cursor.execute('''select * from transfers where asset_id = ?;''',(asset_id,))
 
             # TODO: SHOULD OUTPUT JSON
-            print("Asset # {0} created by {1} in block # {2}".format(asset_id,self.getUsername(asset['author_id']),asset['genesis_block']))
+            # print("Asset # {0} created by {1} in block # {2}".format(asset_id,self.getUsername(asset['author_id']),asset['genesis_block']))
+            # for transfer in cursor:
+                # print("{0} transfered to {1} in block# {2}".format(self.getUsername(transfer['previous_owner_id']),self.getUsername(transfer['new_owner_id']),transfer['block_number']))
+
+            asset_dict = {'author': self.getUsername(asset['author_id']), 'genesis_block': asset['genesis_block'] }
+            # asset_dict['author'] = self.getUsername(asset['author_id']) 
+            # asset_dict['genesis_block']=asset['genesis_block']
+
+            transfers = []
             for transfer in cursor:
-                print("{0} transfered to {1} in block# {2}".format(self.getUsername(transfer['previous_owner_id']),self.getUsername(transfer['new_owner_id']),transfer['block_number']))
+                transfer_dict={'previous_owner': self.getUsername(transfer['previous_owner_id']), 
+                        'next_owner': self.getUsername(transfer['new_owner_id'])
+                        }
+                transfers.append(transfer_dict)
+            return json.dumps((asset_dict,transfers))
+
         # pass
 
     def deleteFromBlock(self,block_number):
@@ -276,9 +313,11 @@ class DAWNBlockchainParser:
     # else returns the op dict
     def get_DAWN_op(self,op):
         if op[0] != 'custom_json':
+            print('no custom_json')
             return None
         # if json_obj[0] not in  ['register_asset','transfer_asset']:
         if op[1]['id'] != 'DAWN':
+            print('no DAWN ops')
             return None
         else:
             # json_obj = json.loads(op[1]['json']);
@@ -292,9 +331,12 @@ class DAWNBlockchainParser:
         json_obj = json.loads(op_dict['json'])
         # print(json.dumps(json_obj))
         # print(op_dict)
+        print('verifying')
         if json_obj[0] == 'register_asset':
+            print('verifying register')
             return self.verify_register_op(op_dict,json_obj)
         elif json_obj[0] == 'transfer_asset':
+            print('verifying transfer')
             return self.verify_transfer_op(op_dict,json_obj)
         else: #no DAWN op that we know
             return False
@@ -309,6 +351,7 @@ class DAWNBlockchainParser:
         if sender == asset_owner:
             return True
         else:
+            print('sender not owner')
             return False
     pass
     
@@ -320,36 +363,45 @@ class DAWNBlockchainParser:
         # print(json_obj['permlink'])
         author,title = resolve_identifier(json_obj[1]['permlink'])
         if sender != author:
+            print('sender not author')
             return False
         #does an asset with the same permlink already exist?
         asset_id = self.db.getAssetID(json_obj[1]['permlink'])
         if asset_id is None:
-            return False
-        return True
+            return True
+        return False
     pass
 
-    def execute_op(self,op_dict):
+    def execute_op(self,op_dict, reference):
         json_obj = json.loads(op_dict['json'])
-        if op_json[0] == 'register_asset':
-            return self.register_asset(json_obj);
-        elif op_json[0] == 'transfer_asset':
-            return self.transfer_asset(json_obj);
+
+        if json_obj[0] == 'register_asset':
+            print('Found new asset')
+            return self.register_asset(json_obj[1],reference);
+        elif json_obj[0] == 'transfer_asset':
+            print('Found new transfer')
+            return self.transfer_asset(json_obj[1],reference);
         else: #no DAWN op that we know
             return False
         pass
 
-    def register_asset(self,json_op,block_number):
+    def register_asset(self,json_op,reference):
         #add obj to DB
         permlink = json_op['permlink']
+        block_number = reference[0]
+        # need to include trxid
         author,title = resolve_identifier(permlink);
         self.db.addAsset(permlink,block_number,author);
+        print('Adding '.format(permlink))
         return True
 
-    def transfer_asset(self,json_op,block_number):
+    def transfer_asset(self,json_op,reference):
         #add transfer_order to DB
         permlink = json_op['permlink']
         new_owner = json_op['new_owner']
+        block_number = reference[0]
         self.db.transferAsset(permlink,block_number,new_owner);
+        print('tranfering asset'.format(permlink))
         return True
 
     def replay(self,block_number=0):
@@ -394,20 +446,26 @@ class DAWNBlockchainParser:
 
                         # not DAWN op 
                         if op_dict is None: 
+                            print('DAWN dict empty')
                             continue
                         #DAWN_op
+                        # op_dict['block'] = this_block;
+                        # op_dict['transaction_id']= trx_id;
+                        # ref = str(this_block)+"/"+str(trx_id)
+                        ref = [this_block,trx_id]
+
                         if self.verify_op(op_dict):
                             # execute  op
-                            self.execute_op(op_dict)
+                            self.execute_op(op_dict,ref)
                     pass
 
                 last_parsed_block = this_block;
                 pass
             else: # reached the last block; get a new one
                 try:
-                    last_irr_block = self.steem_client.last_irreversible_block_num()
+                    last_irr_block = self.steem_client.last_irreversible_block_num
                 except TypeError:
-                    print('problem getting a new block')
+                    print('Problem getting a new block')
                     pass
             pass
 

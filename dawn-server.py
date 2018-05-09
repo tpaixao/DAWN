@@ -1,10 +1,11 @@
 from DAWN_framework import DAWN, DB
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
+import json
 
 app = Flask(__name__)
 
 # Load config ( and override config from an environment variable
- )global config
+global config
 
 try:
     with open('config.json') as config_file:
@@ -28,10 +29,26 @@ except KeyError as er:
 # dawn = DAWN()
 db = DB('test.db')
 
+#routes
 
 @app.route('/')
 def test():
-    return "HELLO"
+    # return "HELLO"
+    # return db.listAssets('tiagouser')
+    return db.listAssetHistory('tiagotest/this-is-my-asset')
+
+
+# API - returns JSON 
+# list assets from user
+@app.route('/api/user/<string:user>')
+def get_user_assets(user):
+    return db.listUserOwned(user)
+# list history of asset
+@app.route('/api/asset/<string:user>/<string:asset>')
+def get_asset_history(user,asset):
+    return db.listAssetHistory(user + '/' + asset)
+
+
 
 # TODO
 @app.route('/login',methods=['GET', 'POST'] )
