@@ -4,17 +4,39 @@
 
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		
-		<link href="/static/picnic.css" rel="stylesheet" type="text/css">
-		<link href="dawn.css" rel="stylesheet">
+		<link href="/static/picnic.min.css" rel="stylesheet" type="text/css">
+		<!--<link href="/static/dawn.css" rel="stylesheet">-->
 		<!--<link href="https://unpkg.com/picnic" rel="stylesheet">-->
 	</head>	
 
 	<body>
 
-		<!-- spacer for the nav bar -->
-		<div style="overflow: hidden;height: 50px;"></div> 
+		<!-- navbar -->
+		<nav>
+			<a href="#" class="brand">DAWN</a>
+			<div class="menu">
+				<span id="user_label"></span>
+				<a href="#" id="loginlogout" class="button icon-puzzle">Login</a>
+			</div> 
+		</nav>
 
-	</body>
+		<!-- spacer for under the nav bar -->
+		<div style="overflow: hidden;height: 100px;"></div> 
+
+		<!-- main structure (flex) -->
+		<div class="flex four">
+
+			<div class="sidebar">
+				<sidemenu></sidemenu>
+			</div>
+			<div class="three-fourth">
+				<div id="content">
+					<asset-list></asset-list>
+					<login-form></login-form>
+				</div>
+			</div>
+
+		</div>
 
 
 	<!-- stuff -->
@@ -22,6 +44,10 @@
 	<script src="static/steem.min.js"></script>	
 	<!--my tags-->
 	<script src="tags/alltags.js"></script>	
+  <script>riot.mount('asset-list')</script>
+  <script>riot.mount('sidemenu')</script>
+  <script>riot.mount('login-form')</script>
+	</body>
 	
 
 </html>
