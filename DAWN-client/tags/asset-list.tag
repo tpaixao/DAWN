@@ -2,7 +2,7 @@
 
 <h3>Asset list</h3>
 
-<table class="primary">
+<table class="primary" style="width: 100%">
 	<thead>
 		<tr>
 			<th>Title</th>
@@ -18,14 +18,15 @@
 			<td> {asset.owner} </td>
 			<td><a href="#">Actions</a></td>
 		</tr>
-
 	</tbody>
 </table>
 
-this.assets = [
-			{title: 'First asset',author: 'tiago',owner: 'tiagotest'},
-			{title: 'Second asset',author: 'tiagouser',owner: 'tiagouser'},
-			{title: 'Third asset',author: 'tiago',owner: 'tiagouser'}
+<script>
+	this.assets = [
+{title: 'First asset',author: 'tiago',owner: 'tiagotest'},
+{title: 'Second asset',author: 'tiagouser',owner: 'tiagouser'},
+{title: 'Third asset',author: 'tiago',owner: 'tiagouser'}
 ]
+</script>
 
 </asset-list>

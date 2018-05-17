@@ -15,8 +15,7 @@
 		<nav>
 			<a href="#" class="brand">DAWN</a>
 			<div class="menu">
-				<span id="user_label"></span>
-				<a href="#" id="loginlogout" class="button icon-puzzle">Login</a>
+				<login-button></login-button>
 			</div> 
 		</nav>
 
@@ -29,8 +28,9 @@
 			<div class="sidebar">
 				<sidemenu></sidemenu>
 			</div>
+
 			<div class="three-fourth">
-				<div id="content">
+				<div id="content" style="width: 95%">
 					<asset-list></asset-list>
 					<login-form></login-form>
 				</div>
@@ -42,11 +42,16 @@
 	<!-- stuff -->
 	<script src="static/riot.min.js"></script>	
 	<script src="static/steem.min.js"></script>	
+	<script src="static/cookieSetGet.js"></script>	
 	<!--my tags-->
 	<script src="tags/alltags.js"></script>	
   <script>riot.mount('asset-list')</script>
   <script>riot.mount('sidemenu')</script>
   <script>riot.mount('login-form')</script>
+  <script>riot.mount('login-button')</script>
+	<script>
+		//other stuff
+	</script>
 	</body>
 	
 
