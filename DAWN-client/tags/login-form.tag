@@ -21,23 +21,22 @@
 	});
 
 	keyIsValid(username, pKey){
-		//console.log(steem.auth.isWif(pKey));
-		//console.log(steem.auth.wifToPublic(pKey));
-		//console.log(pKey);
-		//console.log(steem.auth.wifIsValid(pKey,steem.auth.wifToPublic(pKey)));
-		//This always returns true
 		//get pubkey from blockchain?
 		//var pubKey =steem.auth.wifToPublic(pKey); 
 		var pubKey; 
-		steem.api.getAccounts([username], function(err,result){
-			console.log(err,result);
-			this.pubKey = result[0]['posting']['key_auths'][0][0];
-			//console.log(this.pubKey);
-			//return pubKey;
-		});
+		console.log(err,result);
+		this.pubKey = result[0]['posting']['key_auths'][0][0];
 		console.log(pubKey);
-		return steem.auth.wifIsValid(pKey,pubKey) && steem.auth.isWif(pKey);
-	}
+		//steem.auth.wifIsValid(pKey,pubKey) && steem.auth.isWif(pKey);
+
+		if( steem.auth.wifIsValid(pKey,pubKey) && steem.auth.isWif(pKey)){
+			//login is valid
+			setCookie('username',username,365);
+			setCookie('postingkey',postingKey,365);
+		}else{
+			console.log('error logging in');
+		}
+ }
 
 	login(e){
 		var username =this.refs.username_input.value;
@@ -45,12 +44,7 @@
 		/*steem.api.getAccounts([username], function(err, result) {*/
   /*console.log(err, result);*/
 	/*});*/
-		if( this.keyIsValid(username,postingKey) ){
-			setCookie('username',username,365);
-			setCookie('postingkey',postingKey,365);
-		}else{
-			console.log('error logging in');
-		}
+		steem.api.getAccounts([username], keyIsValid(err,result));
 	}
 
 	logout(e){
