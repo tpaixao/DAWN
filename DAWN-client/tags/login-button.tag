@@ -1,6 +1,6 @@
 <login-button>
 
-<a id="loginButton" class="button"> { } </a>
+<a id="loginButton" class="button"> {this.label} </a>
 
 <script>
 	//code
