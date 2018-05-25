@@ -20,22 +20,22 @@
 		console.log("login-form mounted")
 	});
 
-	keyIsValid(result){
-		//get pubkey from blockchain?
-		//var pubKey =steem.auth.wifToPublic(pKey); 
-		console.log(result);
-		this.pubKey = result[0]['posting']['key_auths'][0][0];
-		console.log(this.pubKey);
-		//steem.auth.wifIsValid(pKey,pubKey) && steem.auth.isWif(pKey);
+	/*keyIsValid(result){*/
+		/*//get pubkey from blockchain?*/
+		/*//var pubKey =steem.auth.wifToPublic(pKey); */
+		/*console.log(result);*/
+		/*this.pubKey = result[0]['posting']['key_auths'][0][0];*/
+		/*console.log(this.pubKey);*/
+		/*//steem.auth.wifIsValid(pKey,pubKey) && steem.auth.isWif(pKey);*/
 
-		if( steem.auth.wifIsValid(privKey,pubKey) ){
-			//login is valid
-			setCookie('username',this.username,365);
-			setCookie('postingkey',this.privKey,365);
-		}else{
-			console.log('error logging in');
-		}
- }
+		/*if( steem.auth.wifIsValid(privKey,pubKey) ){*/
+			/*//login is valid*/
+			/*setCookie('username',this.username,365);*/
+			/*setCookie('postingkey',this.privKey,365);*/
+		/*}else{*/
+			/*console.log('error logging in');*/
+		/*}*/
+ /*}*/
 
 	login(e){
 		var username =this.refs.username_input.value;
