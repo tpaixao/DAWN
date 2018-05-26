@@ -6,18 +6,24 @@ var contentDiv = document.getElementById('content');
 var mainview;
 
 //funcs
-//function unmount_main_view() {
-	//mainview.unmount();
-//}
-function mount_tag(tag,args){
+function mount_tag(tag,args=''){
 	//mainview.unmount();
 	contentDiv.innerHTML = '<'+tag+'></'+tag+'>';
 	mainview = riot.mount('div#content',tag);
 }
 
+function checkLoggedIn(){
+}
 
+var session = {
+	init: function(opts){
+		loggedIn = false;
+	}
+};
 
 mount_tag('login-form')
+
+
 
 // mount stuff
 //riot.mount('login-button');
