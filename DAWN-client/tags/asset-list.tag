@@ -22,6 +22,7 @@
 </table>
 
 <script>
+	
 	this.assets = [
 {title: 'First asset',author: 'tiago',owner: 'tiagotest'},
 {title: 'Second asset',author: 'tiagouser',owner: 'tiagouser'},
