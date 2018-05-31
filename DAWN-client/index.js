@@ -35,10 +35,11 @@ function setupTestnet(){
 var session = {
 	init: function(opts){
 		loggedIn = false;
-		setupTestnet();
+		//setupTestnet();
 	}
 };
 
+setupTestnet();
 mount_tag('login-form')
 
 
