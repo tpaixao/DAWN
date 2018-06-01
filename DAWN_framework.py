@@ -197,13 +197,16 @@ class DB:
         pass
 
 
-    def listAssets(self,username):
+    def listAssets(self,username,sort='desc',start=0,nresults=10):
         user_id = self.getUserID(username);
         if user_id is None:
             return '{ "error": "user not on database" }';
 
         cursor = self.db.cursor();
-        cursor.execute('''select * from assets where owner_id = ?''',(user_id,));
+        if sort=='desc':
+            cursor.execute('''select * from assets where owner_id = ? order by genesis_block DESC limit ? offset ? ''',(user_id,nresults,start,));
+        else:
+            cursor.execute('''select * from assets where owner_id = ? order by genesis_block ASC limit ? offset ? ''',(user_id,nresults,start,));
         # if json_output:
         return json.dumps( [dict(ix) for ix in cursor.fetchall()] ) 
         # else:
@@ -212,30 +215,35 @@ class DB:
                 # return row['permlink']
             # pass
 
-    def listUserOwned(self,username):
+    def listUserOwned(self,username,sort='desc',start=0,nresults=10):
         user_id = self.getUserID(username);
         if user_id is None:
             return '{ "error": "user not on database" }';
 
         cursor = self.db.cursor();
 
-        cursor.execute('''select asset_id,permlink,genesis_block,username from assets join users on users.user_id=assets.author_id where assets.owner_id=?''',(user_id,));
+        if sort=='desc':
+            cursor.execute('''select asset_id,permlink,genesis_block,username from assets join users on users.user_id=assets.author_id where assets.owner_id=? order by genesis_block desc limit ? offset ? ''',(user_id,nresults,start,));
+        else:
+            cursor.execute('''select asset_id,permlink,genesis_block,username from assets join users on users.user_id=assets.author_id where assets.owner_id=? order by genesis_block asc limit ? offset ? ''',(user_id,nresults,start,));
         # if json_output:
         return json.dumps( [dict(ix) for ix in cursor.fetchall()] ) 
 
-    def listUserCreated(self,username):
+    def listUserCreated(self,username,sort='desc',start=0,nresults=10):
         user_id = self.getUserID(username);
         if user_id is None:
             return '{ "error": "user not on database" }';
 
         cursor = self.db.cursor();
-
-        cursor.execute('''select asset_id,permlink,genesis_block,username from assets join users on users.user_id=assets.author_id where assets.author=?''',(user_id,));
+        if sort=='desc':
+            cursor.execute('''select asset_id,permlink,genesis_block,username from assets join users on users.user_id=assets.author_id where assets.author=? order by genesis_block desc limit ? offset ?''',(user_id,nresults,start,));
+        else:
+            cursor.execute('''select asset_id,permlink,genesis_block,username from assets join users on users.user_id=assets.author_id where assets.author=? order by genesis_block asc limit ? offset ?''',(user_id,nresults,start,));
         # if json_output:
         return json.dumps( [dict(ix) for ix in cursor.fetchall()] ) 
 
     def getUsername(self,userid):
-        print(userid)
+        # print(userid)
         cursor = self.db.cursor();
         cursor.execute('''select username from users where user_id = ?''',(userid,));
         user = cursor.fetchone();
@@ -276,14 +284,7 @@ class DB:
             cursor = self.db.cursor()
             cursor.execute('''select * from transfers where asset_id = ?;''',(asset_id,))
 
-            # TODO: SHOULD OUTPUT JSON
-            # print("Asset # {0} created by {1} in block # {2}".format(asset_id,self.getUsername(asset['author_id']),asset['genesis_block']))
-            # for transfer in cursor:
-                # print("{0} transfered to {1} in block# {2}".format(self.getUsername(transfer['previous_owner_id']),self.getUsername(transfer['new_owner_id']),transfer['block_number']))
-
             asset_dict = {'author': self.getUsername(asset['author_id']), 'genesis_block': asset['genesis_block'] }
-            # asset_dict['author'] = self.getUsername(asset['author_id']) 
-            # asset_dict['genesis_block']=asset['genesis_block']
 
             transfers = []
             for transfer in cursor:
@@ -291,9 +292,8 @@ class DB:
                         'next_owner': self.getUsername(transfer['new_owner_id'])
                         }
                 transfers.append(transfer_dict)
-            return json.dumps((asset_dict,transfers))
 
-        # pass
+            return json.dumps((asset_dict,transfers))
 
     def deleteFromBlock(self,block_number):
         cursor = self.db.cursor();
