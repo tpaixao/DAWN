@@ -1,0 +1,7 @@
+{
+	"username": "dawn-user-3",
+	"postingKey": "5JQzv2RLofxQJRsdgrmNEwGQyGFNaj23kKthZcyuDeQBecRkSm4",
+	"db_name": "test.db",
+	"steem_node": [ "https://testnet.steem.vc" ],
+	"first_block": "5309277"
+}
