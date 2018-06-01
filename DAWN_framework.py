@@ -81,6 +81,7 @@ class DB:
                 asset_id integer primary key autoincrement,
                 permlink text not null unique,
                 genesis_block integer not null,
+                tx_id text not null,
                 author_id integer,
                 owner_id integer,
                 last_transfer_id integer,
@@ -92,6 +93,7 @@ class DB:
         cursor.execute('''create table transfers(
                 transfer_id integer primary key autoincrement,
                 block_number int not null,
+                tx_id text not null,
                 previous_transfer int,
                 asset_id integer,
                 previous_owner_id integer,
@@ -126,7 +128,7 @@ class DB:
         return last_parsed_block;
 
 
-    def addAsset(self,permlink,block,author):
+    def addAsset(self,permlink,block,tx_id,author):
         cursor = self.db.cursor();
         #check if the author already exists
         # cursor.execute('''select user_id from users where username = ?''',(author,));
@@ -142,15 +144,15 @@ class DB:
             
         #add the asset
         try:
-            cursor.execute('''insert into assets(permlink,genesis_block,author_id,owner_id,last_transfer_id) 
+            cursor.execute('''insert into assets(permlink,genesis_block,tx_id,author_id,owner_id,last_transfer_id) 
                     values(?,?,?,?,null)
-                    ''', (permlink,block,author_id,author_id) );
+                    ''', (permlink,block,tx_id,author_id,author_id) );
             self.db.commit() 
         except sqlite3.IntegrityError:
             print('Record already exists')
         pass
 
-    def transferAsset(self,assetPermlink,block,new_owner):
+    def transferAsset(self,assetPermlink,block,tx_id,new_owner):
         cursor = self.db.cursor();
         
         # Check that new_owner exists or add it
@@ -176,7 +178,7 @@ class DB:
             last_transfer_id = asset['last_transfer_id']
 
             #add transfer to transfers table
-            cursor.execute('''insert into transfers(block_number,previous_transfer,asset_id,previous_owner_id,new_owner_id) values(?,?,?,?,?);''',(block,last_transfer_id,asset_id,previous_owner_id,new_owner_id,))
+            cursor.execute('''insert into transfers(block_number,tx_id,previous_transfer,asset_id,previous_owner_id,new_owner_id) values(?,?,?,?,?);''',(block,tx_id,last_transfer_id,asset_id,previous_owner_id,new_owner_id,))
             transfer_id=cursor.lastrowid
 
             # update asset
@@ -389,9 +391,10 @@ class DAWNBlockchainParser:
         #add obj to DB
         permlink = json_op['permlink']
         block_number = reference[0]
+        tx_id = reference[1]
         # need to include trxid
         author,title = resolve_identifier(permlink);
-        self.db.addAsset(permlink,block_number,author);
+        self.db.addAsset(permlink,block_number,tx_id,author);
         print('Adding '.format(permlink))
         return True
 
@@ -400,7 +403,8 @@ class DAWNBlockchainParser:
         permlink = json_op['permlink']
         new_owner = json_op['new_owner']
         block_number = reference[0]
-        self.db.transferAsset(permlink,block_number,new_owner);
+        tx_id = reference[1]
+        self.db.transferAsset(permlink,block_number,tx_id,new_owner);
         print('tranfering asset'.format(permlink))
         return True
 
@@ -456,6 +460,7 @@ class DAWNBlockchainParser:
 
                         if self.verify_op(op_dict):
                             # execute  op
+                            # print(ref)
                             self.execute_op(op_dict,ref)
                     pass
 
