@@ -64,7 +64,7 @@ class DAWN:
 class DB:
     def __init__(self,filename):
         self.dbfilename = filename
-        self.db = sqlite3.connect(self.dbfilename);
+        self.db = sqlite3.connect(self.dbfilename, check_same_thread = False);
         self.db.row_factory = sqlite3.Row
 
     def closeDB(self):
@@ -217,6 +217,7 @@ class DB:
 
     def listUserOwned(self,username,sort='desc',start=0,nresults=10):
         user_id = self.getUserID(username);
+        print(user_id)
         if user_id is None:
             return '{ "error": "user not on database" }';
 
@@ -271,7 +272,7 @@ class DB:
         owner_name = self.getUsername(owner_id[0])
         return owner_name
 
-    def listAssetHistory(self,asset_permlink,nresults=10,start=0):
+    def listAssetHistory(self,asset_permlink,start=0,nresults=10):
         asset_id = self.getAssetID(asset_permlink);
         if asset_id is None:
             return '{"error": "asset not found on DB"}'
