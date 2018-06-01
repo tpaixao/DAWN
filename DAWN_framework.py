@@ -271,7 +271,7 @@ class DB:
         owner_name = self.getUsername(owner_id[0])
         return owner_name
 
-    def listAssetHistory(self,asset_permlink):
+    def listAssetHistory(self,asset_permlink,nresults=10,start=0):
         asset_id = self.getAssetID(asset_permlink);
         if asset_id is None:
             return '{"error": "asset not found on DB"}'
@@ -282,7 +282,7 @@ class DB:
             asset = cursor1.fetchone();
 
             cursor = self.db.cursor()
-            cursor.execute('''select * from transfers where asset_id = ?;''',(asset_id,))
+            cursor.execute('''select * from transfers where asset_id = ? order by block_number asc limit ? offset ?;''',(asset_id,nresults,start,))
 
             asset_dict = {'author': self.getUsername(asset['author_id']), 'genesis_block': asset['genesis_block'] }
 
