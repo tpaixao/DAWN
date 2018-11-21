@@ -1,0 +1,6 @@
+## To make steem-python work on windows:
+  (tested with python 3.5 32bit)
+
+edit crypto\Random\OSRNG\nt.py 
+
+import winrandom => from . import winrandom
