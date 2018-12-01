@@ -2,6 +2,16 @@
 
 A protocol (and implementation) for tracking ownership of digital assets on the Steem blockchain.
 
+## Roadmap
+
+* QT Client 
+
+		- [] design interface
+* Javascript Client 
+		- [x] dawn-server using Flask to serve a DB
+		- [] 
+
+
 ## The protocol
 
 Two basic operations are allowed: the *registration* of a new asset and the *transfer* of ownership of this asset. These operations are implemented as messages broadcast on the STEEM blockchain, which are cryptographically verified to come from a specific user. This is critical for the trust in this system.
@@ -19,8 +29,8 @@ An asset description follows the schema:
 	}
 ```
 
-Orders are submited as ```custom_json``` transfers with the ```DAWN``` id.
-In order to *register* an asset the ```json_body``` should have the structure:
+Orders are submited as `custom_json` transfers with the `DAWN` id.
+In order to *register* an asset the `json_body` should have the structure:
 
 ```python
 ["register_asset", {
@@ -32,7 +42,7 @@ In order to *register* an asset the ```json_body``` should have the structure:
 ]
 ```
 
-In order to *transfer* an asset the ```json_body``` should have the structure:
+In order to *transfer* an asset the `json_body` should have the structure:
 
 ```python
 ["transfer_asset", {
@@ -44,11 +54,11 @@ In order to *transfer* an asset the ```json_body``` should have the structure:
 ### Verification
 Verification is done only when replaying the full history of transactions as it requires knowledge of all previous transactions (just like any other blockchain).  These transactions are considered valid if:
 
-```register_asset```: 
+`register_asset`: 
 1. No asset with the same permkink should exist already.
 1. sender of the transaction should be the author (as stated in the permlink).
 
-```transfer_asset```: 
+`transfer_asset`: 
 1. asset with the given permlink exists.
 1. sender of the transaction is the current_owner of the asset
 
@@ -57,26 +67,26 @@ Verification is done only when replaying the full history of transactions as it 
 
 ### ```DAWN_framework.py``` 
 
-The file ```DAWN_framework.py``` contains 3 python classes:
+The file `DAWN_framework.py` contains 3 python classes:
 
-* ```DAWN``` class 
-The ```DAWN``` class is simply a wrapper for the ```commit.custom_json``` function in the Steem-Python library. It submits orders to the blockchain formatted to fit the protocol. 
+* `DAWN` class 
+The `DAWN` class is simply a wrapper for the `commit.custom_json` function in the Steem-Python library. It submits orders to the blockchain formatted to fit the protocol. 
 
-* ```DAWNBlockchainParser``` 
-The ```DAWNBlockchainParser``` class reads the Blockchain, looking for DAWN orders. It verifies their validity, as per the protocol, and stores the data in a database (see below).
+* `DAWNBlockchainParser` 
+The `DAWNBlockchainParser` class reads the Blockchain, looking for DAWN orders. It verifies their validity, as per the protocol, and stores the data in a database (see below).
 
-* ```DB``` class
-The ```DB``` class is an utiity class that wraps a SQLite3 database. It constains functions to update and to read from the database.
+* `DB` class
+The `DB` class is an utiity class that wraps a SQLite3 database. It constains functions to update and to read from the database.
 
-```DAWN_framework.py``` also serves as a command-line interface to the framework. Invoke it without parameters to see the options.
+`DAWN_framework.py` also serves as a command-line interface to the framework. Invoke it without parameters to see the options.
 
 
-### ```dawn-server.py```
+### `dawn-server.py`
 This file instantiates a web service (API) that allows querying the database for the parsed results.
 So far, the endpoints are:
 
-```/api/user/<username>```: returns JSON data containing all the assets owned by the user
-```/api/user/<username>/<asset_title>```: returns JSON data containing the ownership history of the asset with permlink ```<username>/<title>```
+`/api/user/<username>`: returns JSON data containing all the assets owned by the user
+`/api/user/<username>/<asset_title>`: returns JSON data containing the ownership history of the asset with permlink `<username>/<title>`
 
 ## Requirements
 
