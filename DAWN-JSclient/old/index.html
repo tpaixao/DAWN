@@ -1,0 +1,58 @@
+<html>
+	<head>
+		<title>Decentralized Asset World Network</title><meta charset="utf-8">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+		<link href="/static/picnic.min.css" rel="stylesheet" type="text/css">
+		<!--<link href="/static/dawn.css" rel="stylesheet">-->
+		<!--<link href="https://unpkg.com/picnic" rel="stylesheet">-->
+	</head>	
+
+	<body>
+
+		<!-- navbar -->
+		<nav>
+			<a href="#" class="brand">DAWN</a>
+			<div class="menu">
+				<login-button></login-button>
+			</div> 
+		</nav>
+
+		<!-- spacer for under the nav bar -->
+		<div style="overflow: hidden;height: 100px;"></div> 
+
+		<!-- main structure (flex) -->
+		<div class="flex four">
+
+			<div class="sidebar">
+				<sidemenu></sidemenu>
+			</div>
+
+			<div class="three-fourth">
+				<div id="content" style="width: 95%">
+					<!--<asset-list></asset-list>-->
+					<!--<login-form></login-form>-->
+					<!--<mainview></mainview>-->
+				</div>
+			</div>
+
+		</div>
+
+
+	<!-- stuff -->
+	<script src="static/riot.min.js"></script>	
+	<script src="static/steem.min.js"></script>	
+	<script src="static/cookieSetGet.js"></script>	
+	<!--my tags-->
+	<script src="tags/AllTags.js"></script>	
+	<script src="index.js"></script>
+	<script>riot.mount('sidemenu')</script>
+	<script>riot.mount('login-button')</script>
+	<!--<script>riot.mount('mainview')</script>-->
+  <!--<script>riot.mount('asset-list')</script>-->
+  <!--<script>riot.mount('login-form')</script>-->
+	</body>
+	
+
+</html>

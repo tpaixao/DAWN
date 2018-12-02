@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">	
+		<title>Limited Edition</title>
+
+	</head>
+	<body>
+
+		<header>
+		</header>
+
+		<!--NAVBAR-->
+		<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+			<a class="navbar-brand" href="/">SteemLimitedEdition</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+
+			<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+			<!--<div class="collapse" id="navbarsExampleDefault">-->
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item active">
+						<a class="nav-link" href="#">Home</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="#">About</a>
+					</li>
+					<!--<li class="nav-item">-->
+						<!--<a class="nav-link disabled" href="#">Disabled</a>-->
+					<!--</li>-->
+					<!--<li class="nav-item dropdown">-->
+					<!--<a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown</a>-->
+					<!--<div class="dropdown-menu" aria-labelledby="dropdown01">-->
+					<!--<a class="dropdown-item" href="#">Action</a>-->
+					<!--<a class="dropdown-item" href="#">Another action</a>-->
+					<!--<a class="dropdown-item" href="#">Something else here</a>-->
+					<!--</div>-->
+					<!--</li>-->
+				</ul>
+				<!--<form class="form-inline my-2 my-lg-0">-->
+					<!--<input class="form-control mr-sm-2" type="text" placeholder="Search" >-->
+					<!--<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>-->
+				<!--</form>-->
+			<!--</div>-->
+			<login-button></login-button>
+		</nav>
+
+		<main role="main" class="container">
+
+		<!--<div style="display: block; width=1000px ; height=100px;"></div></br>-->
+		<div style="overflow: hidden;height: 100px;"></div> 
+	
+				<!--<asset-list> </asset-list>-->
+		
+				<asset-view > </asset-view>
+
+		</main><!-- .container -->
+
+		<script type="text/javascript" charset="utf-8">
+		</script>
+
+		<script type="riot/tag" src="tags/login-button.tag"></script>
+		<script type="riot/tag" src="tags/asset-list.tag"></script>
+		<script type="riot/tag" src="tags/asset-view.tag"></script>
+		<!--<script src="tags/loginButton.js"></script>-->
+		<!--- riot  -->
+		<script src="bower_components/riot/riot+compiler.js"></script>
+		<!--<script src="bower_components/riot/riot.js"></script>-->
+		<!--<script src="bower_components/riot-route/dist/route.js"></script>-->
+
+		<!--tags-->
+		<!--Get data just for testing-->
+		<script type="text/javascript">
+			self=this;
+			const myfile = fetch('/generated.json');
+			const data = myfile.then(function(response){
+				self.data = response.json()
+				console.log('main file');
+				console.log(self.data);
+				/*self.update()*/
+				riot.update();
+				return self.data;
+			});
+			/*	.then(function (myjson){
+				self.assets = myjson;
+			});*/
+
+			this.myobj = {'picture': 'http://sss','title': 'Title','author':'Author','description': 'this is a desc'}; 
+			
+			riot.mount('login-button');
+			riot.mount('asset-list');
+			riot.mount('asset-view',{ asset: this.myobj });
+		</script>
+
+		<!--- js-cookie  -->
+		<!--https://github.com/js-cookie/js-cookie-->
+		<script src="bower_components/js-cookie/src/js.cookie.js"></script>
+		<!--- bootstrap  -->
+		<script src="bower_components/jquery/dist/jquery.min.js"></script>
+		<script src="bower_components/popper.js/dist/popper.min.js"></script>
+		<script src="bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+
+		<!--<script>window.jQuery || document.write('<script src="../../../../assets/js/vendor/jquery-slim.min.js"><\/script>')</script>-->
+	</body>
+</html>

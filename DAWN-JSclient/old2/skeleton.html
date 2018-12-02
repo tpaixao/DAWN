@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Decentralized Asset World Network</title><meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+		<link href="/picnic.css" rel="stylesheet" type="text/css">
+		<!--<link href="https://unpkg.com/picnic" rel="stylesheet">-->
+		<link href="dawn.css" rel="stylesheet">
+	</head>
+
+	<body> 
+		<!-- TOP BAR --> 
+		<nav>
+			<a href="#" class="brand">DAWN</a>
+			<div class="menu">
+				<span id="user_label"></span>
+				<a href="#" id="loginlogout" class="button icon-puzzle">Login</a>
+			</div> 
+		</nav>
+
+		<!--hack so that stuff does not get behind the navbar-->
+		<div style="overflow: hidden;height: 50px;"></div> 
+
+		<h1> Welcome to DAWN </h1>
+
+		<!--<div class="flex three center">-->
+			<div><span></span></div> <!--left sidebar?-->
+			<!--<div><span></span></div> [>sidebar?<]-->
+			<!--<div><span></span></div> [>sidebar?<]-->
+			<!--<div><span></span></div> [>sidebar?<]-->
+
+			<!-- LOGIN FORM  -->
+			<div id="login_form" class="">
+				<article class="card">
+					<header>
+						<h2>Login</h2>
+							<fieldset class="flex two">
+								<label> <input id="username_input" type="username" placeholder="STEEM username"></label>
+								<label><input id="postingkey_input" type="password" placeholder="Private Posting Key"></label>
+							</fieldset>	
+						<button id="login_button" class="success">Login</button>
+						<!--<button class="dangerous">Cancel</button>-->
+					</header>
+				</article>
+
+			</div>
+			
+			<!--<div><span></span></div> [>right sidebar?<]-->
+			<!--<div><span></span></div> [> just to make space <]-->
+
+			<!-- Register Form -->
+			<div id="register_form" >
+				<article class="card">
+					<header>
+							<h2>Register a new asset</h2>
+							<!--<fieldset class="flex two">-->
+							<fieldset class="">
+								<label> <input id="title_input" type="username" placeholder="Title"></label>
+								<textarea id="data_input" placeholder="data"></textarea>
+							</fieldset>	
+						<button id="register_button" class="success">Register</button>
+					</header>
+				</article><br/>
+			</div>
+
+			<!--<div><span></span></div> [>right sidebar?<]-->
+			<!--<div><span></span></div> [>right sidebar?<]-->
+
+			<!-- LIST OF ASSETS -->
+			<div id="asset_list" class="two-third">
+				<article class="card">
+					<header>
+					</header>
+				</article>
+			</div>
+
+			<div><span></span></div> <!--right sidebar?-->
+		<!--</div>  [> end of flex <]-->
+
+		
+
+		<!-- dsteem?  -->
+		<!--<script src="https://unpkg.com/dsteem@latest/dist/dsteem.js"></script>-->
+		<script src="steem.min.js"></script>
+		<script src="dawn.js"></script> 	
+	</body>
+</html>

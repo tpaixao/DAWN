@@ -5,12 +5,13 @@ A protocol (and implementation) for tracking ownership of digital assets on the 
 ## Roadmap
 
 * QT Client 
+The idea is to have fully integrated Qt-based desktop client that syncs with the blockchain and allows one to view the state of the sub-chain (see all assets, history, etc) as well as submit orders (transfers/ register assets). The advantage is that users can verify the state of the subchain independently (at least to the extent that the node they connect to is honest). 
 
-		- [] design interface
 * Javascript Client 
-		- [x] dawn-server using Flask to serve a DB
-		- [] 
+		This is to be used together with the dawn-server as to serve as a local(js)-only client that reads information from the dawn-server which is located elsewhere. I aim to build it using riotJS. The advantage is that it is easier to access (just a web page somewhere, should probably be able to be used locally even). The disadvantage is that it relies on a third-party service (that serves the DB) which could potentially be malicious.
 
+* Use merkle proofs to prove inclusion of all and particular transactions.
+* 
 
 ## The protocol
 
