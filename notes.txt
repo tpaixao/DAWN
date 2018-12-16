@@ -4,3 +4,7 @@
 edit crypto\Random\OSRNG\nt.py 
 
 import winrandom => from . import winrandom
+
+## can also remove pycrypto and install pycryptodome: its a dropin replacement for pycrypto
+
+
