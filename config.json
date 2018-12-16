@@ -1,7 +1,0 @@
-{
-	"username": "tiagotest",
-	"postingKey": "5J8UmwoWoySnkjfdrR9BDLjPVAmsDfof6ovqXVZXCfM3ZYZxVSA",
-	"db_name": "test.db",
-	"steem_node": [ "https://testnet.steem.vc" ],
-	"first_block": "5309277"
-}

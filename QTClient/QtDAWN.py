@@ -1,16 +1,34 @@
 import sys
 
 from PyQt5.QtWidgets import (QWidget, QMainWindow,  
-    QAction, QFileDialog, QApplication, QLabel, QHBoxLayout, QVBoxLayout,
-    QListWidgetItem, QComboBox, QPushButton,
-    QCheckBox, QTreeWidget,QTreeWidgetItem)
-
+    QAction, QApplication, QLabel, QHBoxLayout, QVBoxLayout,
+    QListWidget, QListWidgetItem,QLineEdit, QTableWidget)
+    #, QComboBox, QPushButton, QCheckBox)
 
 from PyQt5.QtWidgets import QSizePolicy
 
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+#from PyQt5.QtGui import *
+#from PyQt5.QtCore import *
 
+class centralWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        hbox_top = QHBoxLayout() 
+        hbox_top.addWidget(QLineEdit()) 
+        hbox = QHBoxLayout()
+        hbox.addWidget(QTableWidget())
+        # just for show
+        hbox.addWidget(QLabel('test'))
+
+        vbox = QVBoxLayout()
+        vbox.addLayout(hbox_top)
+        vbox.addLayout(hbox)
+
+        self.setLayout(vbox)
+         
 
 class MainWindow(QMainWindow):
     
@@ -20,8 +38,8 @@ class MainWindow(QMainWindow):
         
     def initUI(self):      
 
-        #self.mainWidget = centralWidget()
-        #self.setCentralWidget(self.mainWidget)
+        self.mainWidget = centralWidget()
+        self.setCentralWidget(self.mainWidget)
         self.statusBar()
 
         #setup actions for the menu
