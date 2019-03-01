@@ -8,3 +8,12 @@ import winrandom => from . import winrandom
 ## can also remove pycrypto and install pycryptodome: its a dropin replacement for pycrypto
 
 
+# test users
+
+# Created a number of testnet users:
+dawn-user-1
+dawn-user-2
+dawn-user-3
+
+# inserted a bunch of test data starting at block 6776075
+
