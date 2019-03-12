@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QMainWindow,
 
 from PyQt5.QtWidgets import QSizePolicy
 
-#from PyQt5.QtGui import *
+from PyQt5.QtGui import QIcon
 #from PyQt5.QtCore import *
 
 class centralWidget(QWidget):
@@ -47,16 +47,16 @@ class MainWindow(QMainWindow):
         #openFile.setShortcut('Ctrl+O')
         #openFile.setStatusTip('Open new File')
         #openFile.triggered.connect(self.showDialog)
-        #closeApp = QAction(QIcon('close.png'), 'Exit', self)
-        # closeApp.setShortcut('Esc')
-        #closeApp.setStatusTip('Close the application')
-        #closeApp.triggered.connect(self.close)
+        closeApp = QAction(QIcon('close.png'), 'Exit', self)
+        closeApp.setShortcut('Esc')
+        closeApp.setStatusTip('Close the application')
+        closeApp.triggered.connect(self.close)
 
         # create the menu
         menubar = self.menuBar()
-        #fileMenu = menubar.addMenu('&File')
+        fileMenu = menubar.addMenu('&File')
         #fileMenu.addAction(openFile)       
-        #fileMenu.addAction(closeApp)       
+        fileMenu.addAction(closeApp)       
         
         # basic geometry/params
         self.setGeometry(100, 100, 800, 600)
