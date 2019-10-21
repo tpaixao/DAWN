@@ -1,6 +1,6 @@
 appdirs==1.4.3
 certifi==2018.11.29
-ecdsa==0.13
+ecdsa==0.13.3
 funcy==1.11
 future==0.17.1
 langdetect==1.0.7
