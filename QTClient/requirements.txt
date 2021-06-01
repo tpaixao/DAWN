@@ -14,6 +14,6 @@ six==1.12.0
 steem==1.0.1
 toolz==0.9.0
 ujson==1.35
-urllib3==1.24.1
+urllib3==1.26.5
 voluptuous==0.11.5
 w3lib==1.19.0
