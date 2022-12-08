@@ -1,5 +1,5 @@
 appdirs==1.4.3
-certifi==2018.11.29
+certifi==2022.12.7
 ecdsa==0.13
 funcy==1.11
 future==0.17.1
